@@ -1,0 +1,39 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "A template is for creating lambda from s3 buckets",
+    "Resources": {
+        "ExampleInvokePermission": {
+         "Type": "AWS::Lambda::Permission",
+         "DependsOn": "LambdaFunResource",
+         "Properties": {
+            "FunctionName": {
+               "Fn::GetAtt": [
+                  "LambdaFunResource",
+                  "Arn"
+               ]
+            },
+            "Action": "lambda:InvokeFunction",
+            "Principal": "s3.amazonaws.com",
+            "SourceArn": {
+               "Fn::Sub": "arn:aws:s3:::my-student-data"
+            }
+         }
+      },
+        "LambdaFunResource": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "FunctionName": "demo-lambda-function",
+                
+                "Code": {
+                    "S3Bucket" : "my-student-output-data",
+                    "S3Key" : "index.zip"
+                },
+                "Description": "Used to run job",
+                "Handler": "index.lambda_handler",
+                "Role": "arn:aws:iam::078424904046:role/s3_full_access",
+                "Runtime": "python3.9",
+                "Timeout": 120
+            }
+        }
+  }
+}
