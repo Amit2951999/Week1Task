@@ -1,39 +1,65 @@
 {
     "AWSTemplateFormatVersion": "2010-09-09",
-    "Description": "A template is for creating lambda from s3 buckets",
+    "Description": "This template is to create all resources for Config Service Api",
+    "Parameters": {
+        "S3BucketName": {
+            "Type": "String",
+            "Default": "my-student-data"
+        }
+    },
     "Resources": {
-        "ExampleInvokePermission": {
-         "Type": "AWS::Lambda::Permission",
-         "DependsOn": "LambdaFunResource",
-         "Properties": {
-            "FunctionName": {
-               "Fn::GetAtt": [
-                  "LambdaFunResource",
-                  "Arn"
-               ]
-            },
-            "Action": "lambda:InvokeFunction",
-            "Principal": "s3.amazonaws.com",
-            "SourceArn": {
-               "Fn::Sub": "arn:aws:s3:::my-student-data"
+        "ExampleS3": {
+            "Type": "AWS::S3::Bucket",
+            "DependsOn": "ExampleInvokePermission",
+            "Properties": {
+                "BucketName": {
+                    "Ref": "S3BucketName"
+                },
+                "NotificationConfiguration": {
+                    "LambdaConfigurations": [
+                        {
+                            "Event": "s3:ObjectCreated:*",
+                            "Function": {
+                                "Fn::GetAtt": [
+                                    "ExampleLambdaFunction",
+                                    "Arn"
+                                ]
+                            }
+                        }
+                    ]
+                }
             }
-         }
-      },
-        "LambdaFunResource": {
+        },
+        "ExampleInvokePermission": {
+            "Type": "AWS::Lambda::Permission",
+            "DependsOn": "ExampleLambdaFunction",
+            "Properties": {
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "ExampleLambdaFunction",
+                        "Arn"
+                    ]
+                },
+                "Action": "lambda:InvokeFunction",
+                "Principal": "s3.amazonaws.com",
+                "SourceArn": {
+                    "Fn::Sub": "arn:aws:s3:::${S3BucketName}"
+                }
+            }
+        },
+        "ExampleLambdaFunction": {
             "Type": "AWS::Lambda::Function",
             "Properties": {
-                "FunctionName": "demo-lambda-function",
-                
                 "Code": {
                     "S3Bucket" : "my-student-output-data",
                     "S3Key" : "index.zip"
                 },
-                "Description": "Used to run job",
+                "FunctionName": "students-lambda-function",
                 "Handler": "index.lambda_handler",
                 "Role": "arn:aws:iam::078424904046:role/s3_full_access",
                 "Runtime": "python3.9",
-                "Timeout": 120
+                "Timeout": "120"
             }
         }
-  }
+    }
 }
