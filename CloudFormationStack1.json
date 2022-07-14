@@ -4,13 +4,12 @@
     "Parameters": {
         "S3BucketName": {
             "Type": "String",
-            "Default": "my-student-data"
+            "Default": "my-students-data"
         }
     },
     "Resources": {
         "ExampleS3": {
             "Type": "AWS::S3::Bucket",
-            "DependsOn": "ExampleInvokePermission",
             "Properties": {
                 "BucketName": {
                     "Ref": "S3BucketName"
@@ -30,6 +29,12 @@
                 }
             }
         },
+		"backupS3bucket": {
+			"Type": "AWS::S3::Bucket",
+			"Properties": {
+				"BucketName": "my-student-backup-data"
+			}
+		},
         "ExampleInvokePermission": {
             "Type": "AWS::Lambda::Permission",
             "DependsOn": "ExampleLambdaFunction",
@@ -47,16 +52,43 @@
                 }
             }
         },
+		"FullAccessRole":{
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "ManagedPolicyArns": [
+                    "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+                ],
+			    "RoleName" : "s3_full_access"
+                
+            }
+        },
         "ExampleLambdaFunction": {
+			"DependsOn": "FullAccessRole",
             "Type": "AWS::Lambda::Function",
             "Properties": {
                 "Code": {
-                    "S3Bucket" : "my-student-output-data",
+                    "S3Bucket" : "lambdafun-code-bucket",
                     "S3Key" : "index.zip"
                 },
                 "FunctionName": "students-lambda-function",
                 "Handler": "index.lambda_handler",
-                "Role": "arn:aws:iam::078424904046:role/s3_full_access",
+                "Role": "arn:aws:iam::747811223119:role/s3_full_access",
                 "Runtime": "python3.9",
                 "Timeout": "120"
             }
